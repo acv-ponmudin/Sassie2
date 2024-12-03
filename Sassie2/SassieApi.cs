@@ -1,19 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using System;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Sassie2
 {
     class SassieApi
     {
-        
         HttpClient client;
+
         public SassieApi()
         {
             client = new HttpClient();
@@ -70,8 +68,9 @@ namespace Sassie2
             }
         }
 
-        public async Task AuthenticateAsync(string jsonData)
+        public async Task<string> AuthenticateAsync(string jsonData)
         {
+            string token = "";
             try
             {
                 //string jsonData = JsonConvert.SerializeObject(data); // Serialize to JSON
@@ -82,7 +81,10 @@ namespace Sassie2
                 if (response.IsSuccessStatusCode)
                 {
                     string responseData = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine(responseData);
+                    //Console.WriteLine(responseData);
+
+                    var result = JsonConvert.DeserializeObject<dynamic>(responseData);
+                    token = result.access_token;
                 }
                 else
                 {
@@ -93,6 +95,8 @@ namespace Sassie2
             {
                 Console.WriteLine($"Exception: {ex.Message}");
             }
+
+            return token;
         }
 
         public async Task PostDataAsync(string jsonData, string token)
@@ -121,6 +125,5 @@ namespace Sassie2
                 Console.WriteLine($"Exception: {ex.Message}");
             }
         }
-
     }
 }

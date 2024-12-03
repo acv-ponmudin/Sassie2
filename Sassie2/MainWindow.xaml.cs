@@ -11,8 +11,7 @@ namespace Sassie2
         {
             InitializeComponent();
 
-            HondaCPOInspectionReport report = new HondaCPOInspectionReport();
-            report.GetData();
+            new HondaCPOInspectionReport().GetData();
         }
 
         private void btnGo_Click(object sender, RoutedEventArgs e)

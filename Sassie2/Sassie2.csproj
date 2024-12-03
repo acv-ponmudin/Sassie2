@@ -90,6 +90,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="DBHondaCPO.cs" />
+    <Compile Include="QuestionMapping.cs" />
     <Compile Include="SassieApi.cs" />
     <Compile Include="Utilities.cs" />
     <Compile Include="Vehicle.cs" />
