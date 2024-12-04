@@ -8,7 +8,8 @@ namespace Sassie2
 {
     internal class HondaCPOInspectionReport
     {
-        string _sAID;
+        string _assignmentID;
+        string _divisionCode;
         DataSet _dsCPOData;
         SassieApi sassieApi;
 
@@ -51,25 +52,23 @@ namespace Sassie2
         {
             try
             {
-                _sAID = "26228303";
-                //_sAID = "23183043";
+                string surveyID = "";
+                //_assignmentID = "26228303";
+                //_assignmentID = "23183043";
+                _assignmentID = "22790360";
+                _assignmentID = "26224623";//8 post-sale, no pre-sale 
+                _assignmentID = "26224953";//acura 
 
-                _dsCPOData = new DBHondaCPO().GetHondaCPOOCR(Convert.ToInt32(_sAID), "en");
+                _dsCPOData = new DBHondaCPO().GetHondaCPOOCR(Convert.ToInt32(_assignmentID), "en");
+
+                _divisionCode = _dsCPOData.Tables[0].Rows[0]["Division_Code"].ToString().Trim();
+                surveyID = _divisionCode == "B" ? "1061" : "1039";
 
                 //string test = JsonConvert.SerializeObject(_dsCPOData.Tables[3]);
 
                 //_strImagePath = _dvCPOData[0].Table.Rows[0]["PDF_File_Name"].ToString().Trim().Remove(0, 11);
                 //_NoPostSaleVehicles = Convert.ToInt32(_dvCPOData[0].Table.Rows[0]["OVehInspected"]);
                 //_NoPreSaleVehicles = Convert.ToInt32(_dvCPOData[0].Table.Rows[0]["RVehInspected"]);
-                //_DivisionCode = _dvCPOData[0].Table.Rows[0]["Division_Code"].ToString().Trim();
-                //if ((_DivisionCode == "B"))
-                //{
-                //    _ReportTitle = "ReportTitle_Acura";
-                //}
-                //else
-                //{
-                //    _ReportTitle = "ReportTitle_Honda";
-                //}
 
                 //1. Consultation information 
                 //2. Dealer information 
@@ -82,7 +81,7 @@ namespace Sassie2
                 //9. Facility images 
 
                 inspection_data = new Dictionary<string, string>() {
-                    {"survey_id", "1039" },
+                    {"survey_id", surveyID },
                     {"client_location_id", "1001" }
                 };
 
