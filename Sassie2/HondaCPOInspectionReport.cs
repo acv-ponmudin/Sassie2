@@ -8,61 +8,59 @@ namespace Sassie2
 {
     internal class HondaCPOInspectionReport
     {
-        string _assignmentID;
-        string _divisionCode;
-        DataSet _dsCPOData;
-        SassieApi sassieApi;
-
-        List<Dictionary<int, string>> presale_list = new List<Dictionary<int, string>>();
-        List<Dictionary<int, string>> postsale_list = new List<Dictionary<int, string>>();
-
-        Dictionary<string, Dictionary<string, string>> presale_vehicles = new Dictionary<string, Dictionary<string, string>>();
-        Dictionary<string, Dictionary<string, string>> postsale_vehicles = new Dictionary<string, Dictionary<string, string>>();
-
-        Dictionary<string, string> inspection_data = new Dictionary<string, string>();
+        private string _assignmentID;
+        private string _divisionCode;
+        private DataSet _dsCPOData;
+        private readonly SassieApi _sassieApi;
+        private List<Dictionary<int, string>> _presale_list = new List<Dictionary<int, string>>();
+        private List<Dictionary<int, string>> _postsale_list = new List<Dictionary<int, string>>();
+        private Dictionary<string, Dictionary<string, string>> _presale_vehicles = new Dictionary<string, Dictionary<string, string>>();
+        private Dictionary<string, Dictionary<string, string>> _postsale_vehicles = new Dictionary<string, Dictionary<string, string>>();
+        private Dictionary<string, string> _inspection_data = new Dictionary<string, string>();
 
         public HondaCPOInspectionReport()
         {
-            sassieApi = new SassieApi();
+            _sassieApi = new SassieApi();
 
-            presale_list.Add(QuestionMapping.presale_mappingA);
-            presale_list.Add(QuestionMapping.presale_mappingB);
-            presale_list.Add(QuestionMapping.presale_mappingC);
-            presale_list.Add(QuestionMapping.presale_mappingD);
-            presale_list.Add(QuestionMapping.presale_mappingE);
-            presale_list.Add(QuestionMapping.presale_mappingF);
-            presale_list.Add(QuestionMapping.presale_mappingG);
-            presale_list.Add(QuestionMapping.presale_mappingH);
-            presale_list.Add(QuestionMapping.presale_mappingI);
-            presale_list.Add(QuestionMapping.presale_mappingJ);
+            _presale_list.Add(QuestionMapping.presale_mappingA);
+            _presale_list.Add(QuestionMapping.presale_mappingB);
+            _presale_list.Add(QuestionMapping.presale_mappingC);
+            _presale_list.Add(QuestionMapping.presale_mappingD);
+            _presale_list.Add(QuestionMapping.presale_mappingE);
+            _presale_list.Add(QuestionMapping.presale_mappingF);
+            _presale_list.Add(QuestionMapping.presale_mappingG);
+            _presale_list.Add(QuestionMapping.presale_mappingH);
+            _presale_list.Add(QuestionMapping.presale_mappingI);
+            _presale_list.Add(QuestionMapping.presale_mappingJ);
 
-            postsale_list.Add(QuestionMapping.postsale_mappingA);
-            postsale_list.Add(QuestionMapping.postsale_mappingB);
-            postsale_list.Add(QuestionMapping.postsale_mappingC);
-            postsale_list.Add(QuestionMapping.postsale_mappingD);
-            postsale_list.Add(QuestionMapping.postsale_mappingE);
-            postsale_list.Add(QuestionMapping.postsale_mappingF);
-            postsale_list.Add(QuestionMapping.postsale_mappingG);
-            postsale_list.Add(QuestionMapping.postsale_mappingH);
-            postsale_list.Add(QuestionMapping.postsale_mappingI);
-            postsale_list.Add(QuestionMapping.postsale_mappingJ);
+            _postsale_list.Add(QuestionMapping.postsale_mappingA);
+            _postsale_list.Add(QuestionMapping.postsale_mappingB);
+            _postsale_list.Add(QuestionMapping.postsale_mappingC);
+            _postsale_list.Add(QuestionMapping.postsale_mappingD);
+            _postsale_list.Add(QuestionMapping.postsale_mappingE);
+            _postsale_list.Add(QuestionMapping.postsale_mappingF);
+            _postsale_list.Add(QuestionMapping.postsale_mappingG);
+            _postsale_list.Add(QuestionMapping.postsale_mappingH);
+            _postsale_list.Add(QuestionMapping.postsale_mappingI);
+            _postsale_list.Add(QuestionMapping.postsale_mappingJ);
         }
 
         public async void GetData()
         {
             try
             {
-                string surveyID = "";
-                //_assignmentID = "26228303";
-                //_assignmentID = "23183043";
+                _assignmentID = "26228303";
+                _assignmentID = "23183043";
                 _assignmentID = "22790360";
                 _assignmentID = "26224623";//8 post-sale, no pre-sale 
                 _assignmentID = "26224953";//acura 
+                _assignmentID = "26224446";//with comments
 
                 _dsCPOData = new DBHondaCPO().GetHondaCPOOCR(Convert.ToInt32(_assignmentID), "en");
 
                 _divisionCode = _dsCPOData.Tables[0].Rows[0]["Division_Code"].ToString().Trim();
-                surveyID = _divisionCode == "B" ? "1061" : "1039";
+                var surveyID = _divisionCode == "B" ? "1061" : "1039";
+                var clientLocationID = _dsCPOData.Tables[0].Rows[0]["Dealer_Code"].ToString().Trim();
 
                 //string test = JsonConvert.SerializeObject(_dsCPOData.Tables[3]);
 
@@ -80,17 +78,17 @@ namespace Sassie2
                 //8. Facility inspection 
                 //9. Facility images 
 
-                inspection_data = new Dictionary<string, string>() {
+                _inspection_data = new Dictionary<string, string>() {
                     {"survey_id", surveyID },
-                    {"client_location_id", "1001" }
+                    {"client_location_id", clientLocationID }
                 };
 
-                PopulateVehicles();
                 ConsultationInformation();
                 DealerInformation();
-                FacilityInspection();
-                PopulatePresaleQuestions();
+                PopulateVehicles();
                 PopulatePostsaleQuestions();
+                PopulatePresaleQuestions();
+                FacilityInspection();
 
                 var client_data = new
                 {
@@ -101,15 +99,10 @@ namespace Sassie2
                 string client_json = JsonConvert.SerializeObject(client_data);
                 //string token = await sassieApi.AuthenticateAsync(client_json);
 
-                string inspection_json = JsonConvert.SerializeObject(inspection_data);
+                string inspection_json = JsonConvert.SerializeObject(_inspection_data);
                 // await sassieApi.PostDataAsync(inspection_json, token);
 
 
-                ////Vehicle Compliance Information 	
-                //if (_dvCPOData[1].Table.Rows.Count > 0)
-                //{
-                //    // CreateVehicleComplianceInfo();
-                //}
             }
             catch (Exception ex)
             {
@@ -122,86 +115,24 @@ namespace Sassie2
             }
         }
 
-        private void PopulatePresaleQuestions()
+        private void ConsultationInformation()
         {
-            string vin_num;
-            Dictionary<int, string> q_mapping;
-            int qid;
-            int ind = 0;
-            foreach (var pair in presale_vehicles)
+
+            foreach (var item in QuestionMapping.consultation_mapping)
             {
-                vin_num = pair.Key;
-
-                q_mapping = presale_list[ind];
-
-                inspection_data.Add(q_mapping[ind], "Yes");
-
-                foreach (var item in QuestionMapping.vehicle_detail)
-                {
-                    if (!q_mapping.ContainsKey(item.Key))
-                    {
-                        continue;
-                    }
-
-                    inspection_data.Add(q_mapping[item.Key], pair.Value[item.Value].Trim());
-                }
-
-                foreach (DataRow row in _dsCPOData.Tables[5].Rows)
-                {
-                    qid = (int)row["Question_ID"];
-                    if (!q_mapping.ContainsKey(qid))
-                    {
-                        continue;
-                    }
-
-                    if (row[vin_num].ToString().ToLower().Equals("no"))
-                    {
-                        throw new Exception("comments question required!!");
-                    }
-                    inspection_data.Add(q_mapping[qid], row[vin_num].ToString().Trim());
-                }
-                ind++;
+                _inspection_data.Add(item.Value, _dsCPOData.Tables[0].Rows[0][item.Key].ToString());
             }
+
+            _inspection_data.Add("question_1", Convert.ToDateTime(_dsCPOData.Tables[0].Rows[0]["Audit_Date"]).ToString("yyyy-MM-dd"));
+            _inspection_data.Add("question_21", Convert.ToDateTime(_dsCPOData.Tables[0].Rows[0]["Audit_Date"]).ToShortTimeString());
 
         }
 
-        private void PopulatePostsaleQuestions()
+        private void DealerInformation()
         {
-            string vin_num;
-            Dictionary<int, string> q_mapping;
-            int qid;
-            int ind = 0;
-            foreach (var pair in postsale_vehicles)
+            foreach (var item in QuestionMapping.dealer_mapping)
             {
-                vin_num = pair.Key;
-                q_mapping = postsale_list[ind];
-
-                inspection_data.Add(q_mapping[ind], "Yes");
-
-                foreach (var item in QuestionMapping.vehicle_detail)
-                {
-                    if (!q_mapping.ContainsKey(item.Key))
-                    {
-                        continue;
-                    }
-
-                    inspection_data.Add(q_mapping[item.Key], pair.Value[item.Value].Trim());
-                }
-
-                foreach (DataRow row in _dsCPOData.Tables[3].Rows)
-                {
-                    qid = (int)row["Question_ID"];
-                    if (!q_mapping.ContainsKey(qid))
-                    {
-                        continue;
-                    }
-                    if (row[vin_num].ToString().ToLower().Equals("no"))
-                    {
-                        throw new Exception("comments question required!!");
-                    }
-                    inspection_data.Add(q_mapping[qid], row[vin_num].ToString().Trim());
-                }
-                ind++;
+                _inspection_data.Add(item.Value, _dsCPOData.Tables[0].Rows[0][item.Key].ToString());
             }
 
         }
@@ -226,30 +157,119 @@ namespace Sassie2
 
                 if (item["Audit_Type"].Equals("Pre"))
                 {
-                    presale_vehicles.Add(vin, detail);
+                    _presale_vehicles.Add(vin, detail);
                 }
                 else
                 {
-                    postsale_vehicles.Add(vin, detail);
+                    _postsale_vehicles.Add(vin, detail);
                 }
             }
         }
 
+        private void PopulatePostsaleQuestions()
+        {
+            string vin_num;
+            Dictionary<int, string> q_mapping;
+            int qid;
+            int ind = 0;
+            string value;
+            foreach (var pair in _postsale_vehicles)
+            {
+                vin_num = pair.Key;
+                q_mapping = _postsale_list[ind];
+
+                _inspection_data.Add(q_mapping[ind], "Yes");
+
+                foreach (var item in QuestionMapping.vehicle_detail)
+                {
+                    if (!q_mapping.ContainsKey(item.Key))
+                    {
+                        continue;
+                    }
+
+                    _inspection_data.Add(q_mapping[item.Key], pair.Value[item.Value].Trim());
+                }
+
+                foreach (DataRow row in _dsCPOData.Tables[3].Rows)
+                {
+                    qid = (int)row["Question_ID"];
+                    value = row[vin_num].ToString().Trim();
+                    if (!q_mapping.ContainsKey(qid))
+                    {
+                        continue;
+                    }
+
+                    _inspection_data.Add(q_mapping[qid], value);
+
+                    if (!value.ToLower().Equals("yes"))
+                    {
+                        if (!QuestionMapping.comments_mapping.ContainsKey(q_mapping[qid]))
+                        {
+                            throw new Exception(string.Format("comments question missing for {0}!!", q_mapping[qid]));
+                        }
+
+                        _inspection_data.Add(QuestionMapping.comments_mapping[q_mapping[qid]], "comments_dummy_test");
+                    }
+
+                }
+                ind++;
+            }
+
+        }
+
+        private void PopulatePresaleQuestions()
+        {
+            string vin_num;
+            Dictionary<int, string> q_mapping;
+            int qid;
+            int ind = 0;
+            string value;
+            foreach (var pair in _presale_vehicles)
+            {
+                vin_num = pair.Key;
+
+                q_mapping = _presale_list[ind];
+
+                _inspection_data.Add(q_mapping[ind], "Yes");
+
+                foreach (var item in QuestionMapping.vehicle_detail)
+                {
+                    if (!q_mapping.ContainsKey(item.Key))
+                    {
+                        continue;
+                    }
+
+                    _inspection_data.Add(q_mapping[item.Key], pair.Value[item.Value].Trim());
+                }
+
+                foreach (DataRow row in _dsCPOData.Tables[5].Rows)
+                {
+                    qid = (int)row["Question_ID"];
+                    value = row[vin_num].ToString().Trim();
+                    if (!q_mapping.ContainsKey(qid))
+                    {
+                        continue;
+                    }
+
+                    _inspection_data.Add(q_mapping[qid], value);
+
+                    if (!value.ToLower().Equals("yes"))
+                    {
+                        if (!QuestionMapping.comments_mapping.ContainsKey(q_mapping[qid]))
+                        {
+                            throw new Exception(string.Format("comments question missing for {0}!!", q_mapping[qid]));
+                        }
+
+                        _inspection_data.Add(QuestionMapping.comments_mapping[q_mapping[qid]], "comments_dummy_test");
+                    }
+                }
+                ind++;
+            }
+
+        }
+
         private void FacilityInspection()
         {
-            ////question_141
-            ////_dvCPOData[6].Table.Rows[1]["Question_Value"]
-            //result_dict.Add("question_141", _dvCPOData[6].Table.Rows[1]["Question_Value"].ToString());
-            ////question_161
-            ////_dvCPOData[6].Table.Rows[2]["Question_Value"]
-            //result_dict.Add("question_161", _dvCPOData[6].Table.Rows[2]["Question_Value"].ToString());
-            ////question_181
-            ////_dvCPOData[6].Table.Rows[3]["Question_Value"]
-            //result_dict.Add("question_181", _dvCPOData[6].Table.Rows[3]["Question_Value"].ToString());
-            ////question_201
-            ////_dvCPOData[6].Table.Rows[4]["Question_Value"]
-            //result_dict.Add("question_201", _dvCPOData[6].Table.Rows[4]["Question_Value"].ToString());
-
             int qid;
             int qval;
             foreach (DataRow row in _dsCPOData.Tables[6].Rows)
@@ -260,66 +280,8 @@ namespace Sassie2
                 {
                     continue;
                 }
-                inspection_data.Add(QuestionMapping.facility_mapping[qid], QuestionMapping.objective[qval].Trim());
+                _inspection_data.Add(QuestionMapping.facility_mapping[qid], QuestionMapping.objective[qval].Trim());
             }
-        }
-
-        private void DealerInformation()
-        {
-            foreach (var item in QuestionMapping.dealer_mapping)
-            {
-                inspection_data.Add(item.Value, _dsCPOData.Tables[0].Rows[0][item.Key].ToString());
-            }
-
-            ////question_31
-            ////_dvCPOData[0][0]["Dealer_Contact1"]
-            //result_dict.Add("question_31", _dvCPOData[0][0]["Dealer_Contact1"].ToString());
-            ////question_41
-            ////_dvCPOData[0][0]["Email_Address1"]
-            //result_dict.Add("question_41", _dvCPOData[0][0]["Email_Address1"].ToString());
-            ////question_51
-            ////_dvCPOData[0][0]["Dealer_Contact2"]
-            //result_dict.Add("question_51", _dvCPOData[0][0]["Dealer_Contact2"].ToString());
-            ////question_61
-            ////_dvCPOData[0][0]["Email_Address2"]
-            //result_dict.Add("question_61", _dvCPOData[0][0]["Email_Address2"].ToString());
-            ////question_71
-            ////_dvCPOData[0][0]["Dealer_Contact3"]
-            //result_dict.Add("question_71", _dvCPOData[0][0]["Dealer_Contact3"].ToString());
-            ////question_81
-            ////_dvCPOData[0][0]["Email_Address3"]
-            //result_dict.Add("question_81", _dvCPOData[0][0]["Email_Address3"].ToString());
-            ////question_91
-            ////_dvCPOData[0][0]["Dealer_Contact4"]
-            //result_dict.Add("question_91", _dvCPOData[0][0]["Dealer_Contact4"].ToString());
-            ////question_101
-            ////_dvCPOData[0][0]["Email_Address4"]
-            //result_dict.Add("question_101", _dvCPOData[0][0]["Email_Address4"].ToString());
-        }
-
-        private void ConsultationInformation()
-        {
-
-            foreach (var item in QuestionMapping.consultation_mapping)
-            {
-                inspection_data.Add(item.Value, _dsCPOData.Tables[0].Rows[0][item.Key].ToString());
-            }
-
-            inspection_data.Add("question_1", Convert.ToDateTime(_dsCPOData.Tables[0].Rows[0]["Audit_Date"]).ToString("yyyy-MM-dd"));
-            inspection_data.Add("question_21", Convert.ToDateTime(_dsCPOData.Tables[0].Rows[0]["Audit_Date"]).ToShortTimeString());
-
-            ////question_11
-            ////_dvCPOData[0][0]["Assignment_ID"]
-            //result_dict.Add("question_11", (_dvCPOData[0][0]["Assignment_ID"].ToString()));
-            ////question_2741
-            ////_dvCPOData[0][0]["Inspector_ID"]
-            //result_dict.Add("question_2741", _dvCPOData[0][0]["Inspector_ID"].ToString());
-            ////question_1
-            ////Convert.ToDateTime(_dvCPOData[0][0]["Audit_Date"]).ToShortDateString()
-            //result_dict.Add("question_1", Convert.ToDateTime(_dvCPOData[0][0]["Audit_Date"]).ToShortDateString());
-            ////question_21
-            ////Convert.ToDateTime(_dvCPOData[0][0]["Audit_Date"]).ToShortTimeString()
-            //result_dict.Add("question_21", Convert.ToDateTime(_dvCPOData[0][0]["Audit_Date"]).ToShortTimeString());
         }
     }
 }
